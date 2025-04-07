@@ -1,0 +1,56 @@
+name:                paf-tuto-containers
+version:             0.2.0.0
+github:              "githubuser/paf-tuto-containers"
+license:             BSD3
+author:              "Frederic Peschanski (mrgraal)"
+maintainer:          "Frederic.Peschanski@lip6.fr"
+copyright:           "2023 Frederic Peschanski (Sorbonne University)"
+
+extra-source-files:
+- README.md
+- ChangeLog.md
+
+# Metadata used when publishing your package
+# synopsis:            Short description of your package
+# category:            Web
+
+# To avoid duplicated efforts in documentation and dealing with the
+# complications of embedding Haddock markup inside cabal files, it is
+# common to point users to the README.md file.
+description:         Please see the README on GitHub at <https://github.com/githubuser/paf-tuto-containers#readme>
+
+dependencies:
+- base >= 4.7 && < 5
+- text >= 1.2
+- containers >= 0.6
+
+library:
+  source-dirs: src
+
+### Ici on indique une extension de language
+### ajoutée implicitement à tous les modules
+### donc pas besoin de {-# LANGUAGE ... #-}
+default-extensions:
+  OverloadedStrings
+
+executables:
+  paf-tuto-containers-exe:
+    main:                Main.hs
+    source-dirs:         app
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    dependencies:
+    - paf-tuto-containers
+
+tests:
+  paf-tuto-containers-test:
+    main:                Spec.hs
+    source-dirs:         test
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    dependencies:
+    - paf-tuto-containers

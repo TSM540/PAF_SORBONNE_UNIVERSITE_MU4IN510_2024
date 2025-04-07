@@ -1,0 +1,117 @@
+En gros, t'as les foncteurs, les applicatifs, et les monades. C'est des typeclass, qu'on peut instancier.
+Les monades sont plus "puissant" que les applicatifs, qui sont plus "puissant" que les foncteurs
+
+# Foncteurs
+
+Les foncteurs permettent d'appliquer une fonction au sein d'un contexte (càd une valeur dans une boite). Par exemple les listes, et les maybe, bah ils instancient Functor.
+Si t'as envie d'instancier la typeclass Functor à ton propre type, tu dois créer une fonction fmap, où tu écris explicitement comment on doit appliquer une fonction à ton contexte.
+
+Voilà deux exemples :
+Tu veux appliquer la fonction double dans le contexte d'une liste.
+
+Ça ça va t'envoyer une erreur :
+
+-- Define a function to double an integer
+double :: Int -> Int
+double x = x * 2
+
+
+exampleList = double [1, 2, 3, 4] -- > renvoie une erreur
+
+Je pense que ça t'étonne pas trop que ça renvoie une erreur.
+
+C'est pour ça qu'il faut utiliser la méthode fmap, de la typeclass Functor :
+
+
+
+
+
+-- Apply `double` to each element in a list of integers
+exampleList :: [Int]
+exampleList = fmap double [1, 2, 3, 4]
+
+
+exampleList vaudra [2, 4, 6, 8]. 
+La fonction fmap, pour le contexte des listes, applique la fonctions à chaque éléments de la liste.
+
+Après, ça doit pas trop t'étonner, c'est juste un map, donc je vais donner un autre exemple, avec les Maybe.
+Les valeurs de type Maybe, ça peut avoir la valeur Nothing, ou Just x.
+Si t'as une valeur Maybe, et que tu veux lui appliquer une fonction, t'as pas le droit de le faire comme tel car on est dans un contexte : 
+
+double (Just 5) -- > error
+-- ou 
+double Nothing -- > error
+
+Pour ça qu'il faut utiliser fmap. 
+Pour le contexte des Maybe  :
+- Si la fonction f est appliqué à Nothing, on renvoie Nothing
+- Si la fonction f est appliqué à Just x, on renvoie Just (f x)
+
+exampleJust :: Maybe Int
+exampleJust = fmap double (Just 5) -- > Just (double 5) => Just 10
+
+exampleNothing :: Maybe Int
+exampleNothing = fmap double Nothing -- > Nothing
+
+
+
+---foncteurs applicatifs 
+
+
+Les foncteur applicatifs, c'est une version plus puissantes des foncteurs.
+
+Un foncteur permet d'appliquer une fonction à une seule valeur dans un contexte
+Mais du coup, comment faire quand la fonction à plusieurs paramètres dans un contexte ? Typiquement, la fonction :
+add :: int -> int -> int
+add x y = x + y
+
+Prenons deux arguments dans le contexte Maybe(int) : 
+a = Nothing ou Just quelque_chose
+b = Nothing ou Just quelque_chose
+
+Disons qu'on veut faire add a b <- impossible car a et b sont dans un contexte.
+
+On va donc commencer par faire une application partielle de add sur une valeur Maybe int (sur a), avec fmap, vu que fmap ne peut pas prendre les deux valeur a et b d'un coup  :
+a = Nothing ou Just quelque_chose
+ma_valeur = fmap add a
+
+Quel est le type de ma_valeur ? 
+ma_valeur est de type Maybe(int -> int), car ma_valeur reçoit soit :
+- dans le cas où a est un Just quelque_chose, ma_valeur contient la fonction add partiellement appliqué, dans le contexte Maybe :  Just (int -> int)
+- Dans le cas où x vaut Nothing, il reçoit :  Nothing.
+
+Or, on ne peut rien faire avec ça, on est bloqué, on peut pas utilisé la valeur b (Maybe(int)) pour obtenir un résultat, car notre fonction partiellement appliquée est coincé dans son contexte Maybe (Maybe (int -> int).
+
+L'exemple juste ici, était pour montrer clairement le soucis qui arrive, et donc comment les foncteurs applicatifs permettent de le résoudre.
+(J'ai mis en gras pour qu'on voit bien la spécificité : )
+Les foncteurs permettaient juste d'appliquer une fonction à une variable dans un contexte.
+Les foncteurs applicatifs permettent de faire pareil, mais en plus, ils permettent d'appliquer une fonction dans un contexte (ici, Maybe(int -> int))  à une valeur dans un contexte. Grâce notamment à cette fonction : 
+(<*>) :: f (a -> b) -> f a -> f b 
+Notre problème c'était qu'on avait une fonction dans un contexte (Maybe int -> int), et valeur b qui est dans un contexte (Maybe int). Ça correspond exactement à la signature de <*>.
+
+Donc suffit de faire : ma_valeur  <*> b :: Maybe (int)  
+
+
+Et cette spécificité, bah elle permet aussi d'appliqué une fonction à n arguments/valeurs dans un contexte : 
+ma_fonction <$> arg1_dans_contexte <*> arg2_dans_contexte  <*> arg3_dans_contexte  <*> arg3_dans_contexte
+
+En discutant avec gpt, je me suis rendu compte que c'est pas la seule utilité des applicative, ça peut aussi être utile en soit même, le fait d'appliquer une fonction dans un contexte à une valeur dans un contexte, même sans avoir une fonction à plusieurs argument.
+
+Typiquement, si t'as une liste de fonction (donc [int -> int] par exemple, fonction dans le contexte des Liste) que tu veux appliquer à une liste de valeur ([int]), bah ça peut aussi être utile :
+
+
+
+multiplyAndAdd :: [Int -> Int]
+multiplyAndAdd = [(2*), (3+)]
+
+values :: [Int]
+values = [1,2]
+
+result :: [Int]
+result = multiplyAndAdd <*> values
+
+-- result is [2,4,4,5]
+
+
+voilà mes discussions, au cas où ça peut t'être utile  :https://www.perplexity.ai/search/whats-the-link-tKUSZa5oSdClgvP_cOKHZg
+https://www.perplexity.ai/search/The-link-between-5EvfoOfeTta5HPh2I2dEwg 
